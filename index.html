@@ -1,230 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ACCESS//HACKGRID v0.13</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+<meta charset="UTF-8" />
+<title>TERMINAL-0X13</title>
+<style>
     body {
-      background: #000;
-      color: #00ff41;
-      font-family: 'Courier New', Courier, monospace;
-      height: 100vh;
-      overflow: hidden;
-      background-image: 
-        linear-gradient(rgba(0,255,65,0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,65,0.08) 1px, transparent 1px);
-      background-size: 40px 40px;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        background: #000814;
+        color: #00ff41;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.45rem;
+        line-height: 1.55;
+        overflow: hidden;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 30px;
-      border: 2px solid #00ff41;
-      box-shadow: 0 0 30px rgba(0,255,65,0.4);
-      background: rgba(0,0,0,0.85);
-      position: relative;
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 3px,
+            rgba(0, 255, 65, 0.07) 3px,
+            rgba(0, 255, 65, 0.07) 6px
+        );
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .terminal {
+        position: relative;
+        max-width: 960px;
+        margin: 40px auto;
+        padding: 30px 40px;
+        background: rgba(0, 0, 0, 0.92);
+        border: 1px solid #00cc33;
+        box-shadow: 
+            inset 0 0 80px rgba(0, 255, 65, 0.08),
+            0 0 60px rgba(0, 255, 65, 0.15);
+        min-height: 80vh;
     }
 
     .header {
-      text-align: center;
-      margin-bottom: 35px;
-      position: relative;
+        text-align: center;
+        margin-bottom: 2.2rem;
+        font-size: 2.1rem;
+        letter-spacing: 8px;
+        text-shadow: 0 0 10px #00ff41;
+        opacity: 0.92;
     }
 
-    .header h1 {
-      font-size: 2.8rem;
-      text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
-      letter-spacing: 6px;
-      animation: flicker 4s infinite alternate;
+    .prompt-line {
+        margin: 1.1rem 0;
+        white-space: pre;
     }
 
-    .header .version {
-      font-size: 1.1rem;
-      opacity: 0.7;
-      position: absolute;
-      right: 0;
-      top: 10px;
+    .prompt {
+        color: #00ff88;
     }
 
-    .scanline {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        to bottom,
-        transparent 50%,
-        rgba(0,255,65,0.12) 50%,
-        rgba(0,255,65,0.08) 100%
-      );
-      background-size: 100% 6px;
-      pointer-events: none;
-      animation: scan 8s linear infinite;
+    .blink {
+        display: inline-block;
+        width: 14px;
+        height: 1.4rem;
+        background: #00ff41;
+        vertical-align: middle;
+        animation: blink 1.15s step-end infinite;
     }
 
-    .input-group {
-      margin: 25px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    label {
-      font-size: 1.3rem;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      opacity: 0.9;
+    @keyframes blink {
+        50% { opacity: 0; }
     }
 
     input[type="text"] {
-      background: #0a0a0a;
-      color: #00ff41;
-      border: 1px solid #00cc33;
-      padding: 14px 18px;
-      font-family: 'Courier New', monospace;
-      font-size: 1.3rem;
-      width: 100%;
-      outline: none;
-      box-shadow: inset 0 0 10px rgba(0,255,65,0.15);
-      transition: all 0.2s;
+        background: transparent;
+        border: none;
+        color: #00ff41;
+        font-family: inherit;
+        font-size: inherit;
+        outline: none;
+        width: 60%;
+        caret-color: #00ff41;
+        padding: 0;
+        margin-left: 0.4rem;
     }
 
-    input[type="text"]:focus {
-      border-color: #00ff41;
-      box-shadow: 0 0 15px rgba(0,255,65,0.5);
+    input[type="text"]::placeholder {
+        color: #004d1a;
+        opacity: 0.6;
     }
 
     .buttons {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      margin-top: 45px;
-      flex-wrap: wrap;
+        margin-top: 3.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.8rem;
+        justify-content: center;
     }
 
-    .btn {
-      padding: 14px 32px;
-      font-size: 1.2rem;
-      font-family: 'Courier New', monospace;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      cursor: pointer;
-      border: 2px solid;
-      background: transparent;
-      transition: all 0.15s;
-      position: relative;
-      overflow: hidden;
+    button {
+        background: transparent;
+        color: #00ff41;
+        border: 2px solid #00cc33;
+        padding: 0.9rem 2.2rem;
+        font-size: 1.35rem;
+        font-family: inherit;
+        cursor: pointer;
+        min-width: 180px;
+        transition: all 0.12s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    .btn-green {
-      color: #00ff41;
-      border-color: #00ff41;
+    button:hover {
+        background: rgba(0, 255, 65, 0.08);
+        box-shadow: 0 0 25px rgba(0, 255, 65, 0.4);
+        border-color: #00ff41;
     }
 
-    .btn-red {
-      color: #ff2a6d;
-      border-color: #ff2a6d;
+    button:active {
+        transform: translateY(1px);
     }
 
-    .btn-submit {
-      color: #00eaff;
-      border-color: #00eaff;
-      font-weight: bold;
+    .submit-btn {
+        border-color: #ff4444;
+        color: #ff6666;
     }
 
-    .btn:hover {
-      background: rgba(255,255,255,0.08);
-      box-shadow: 0 0 25px currentColor;
+    .submit-btn:hover {
+        background: rgba(255, 68, 68, 0.12);
+        box-shadow: 0 0 30px rgba(255, 68, 68, 0.45);
+        border-color: #ff8888;
     }
 
-    .btn:active {
-      transform: translateY(2px);
+    #result {
+        margin-top: 2.5rem;
+        text-align: center;
+        font-size: 1.8rem;
+        color: #00ff88;
+        text-shadow: 0 0 10px #00ff41;
+        min-height: 2rem;
+        opacity: 0;
+        transition: opacity 0.6s;
     }
 
-    /* CRT flicker effect */
-    @keyframes flicker {
-      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-        text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+    #result.show {
         opacity: 1;
-      }
-      20%, 24%, 55% {
-        text-shadow: none;
-        opacity: 0.6;
-      }
     }
-
-    @keyframes scan {
-      0% { transform: translateY(-100%); }
-      100% { transform: translateY(100%); }
-    }
-
-    .status {
-      margin-top: 30px;
-      text-align: center;
-      font-size: 1.1rem;
-      opacity: 0.7;
-      min-height: 1.5em;
-    }
-  </style>
+</style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="scanline"></div>
+<div class="terminal">
 
-    <div class="header">
-      <h1>ACCESS//HACKGRID</h1>
-      <span class="version">v0.13 - UNAUTHORIZED ACCESS DETECTED</span>
+    <div class="header">ROOT@DARKNET-13:~$</div>
+
+    <div class="prompt-line">
+        <span class="prompt">ENTER HANDLE</span> ............ <input type="text" id="name" placeholder="ghostbyte" maxlength="20"><span class="blink"></span>
     </div>
 
-    <div class="input-group">
-      <label for="name">> ENTER HANDLE / ALIAS:</label>
-      <input type="text" id="name" placeholder="e.g. shadowbyte, neo, zero_cool" autocomplete="off">
-    </div>
-
-    <div class="input-group">
-      <label for="score">> INPUT SCORE / LEVEL:</label>
-      <input type="text" id="score" placeholder="1337, 42069, 999999" autocomplete="off">
+    <div class="prompt-line">
+        <span class="prompt">ENTER SCORE</span>  ............ <input type="text" id="score" placeholder="1337420" maxlength="12"><span class="blink"></span>
     </div>
 
     <div class="buttons">
-      <button class="btn btn-green" onclick="alert('Name field activated')">INPUT NAME</button>
-      <button class="btn btn-green" onclick="alert('Score field activated')">INPUT SCORE</button>
-      <button class="btn btn-submit" onclick="submitData()">SUBMIT // EXECUTE</button>
+        <button onclick="alert('Name field locked.')">CAPTURE NAME</button>
+        <button onclick="alert('Score field locked.')">CAPTURE SCORE</button>
+        <button class="submit-btn" onclick="submitEntry()">SUBMIT TO GRID</button>
     </div>
 
-    <div class="status" id="status">Awaiting input sequence...</div>
-  </div>
+    <div id="result"></div>
 
-  <script>
-    function submitData() {
-      const name = document.getElementById('name').value.trim();
-      const score = document.getElementById('score').value.trim();
-      const status = document.getElementById('status');
+    <div style="margin-top: 3rem; text-align: center; font-size: 1.1rem; color: #004d1a;">
+        [ SESSION ACTIVE • TRACE LEVEL: LOW ]
+    </div>
 
-      if (!name || !score) {
-        status.innerHTML = "ERROR: BOTH FIELDS REQUIRED. ACCESS DENIED.";
-        status.style.color = "#ff2a6d";
+</div>
+
+<script>
+function submitEntry() {
+    const name = document.getElementById('name').value.trim();
+    const score = document.getElementById('score').value.trim();
+    const resultDiv = document.getElementById('result');
+
+    if (!name || !score) {
+        resultDiv.textContent = "ERROR: EMPTY FIELD";
+        resultDiv.style.color = "#ff6666";
+        resultDiv.classList.add('show');
+        setTimeout(() => resultDiv.classList.remove('show'), 2000);
         return;
-      }
-
-      status.innerHTML = `TRANSMISSION SENT → [${name}] @ ${score} pts`;
-      status.style.color = "#00ff41";
-
-      // Optional: you can later send this to a server with fetch()
-      console.log("Submitted:", { name, score });
     }
-  </script>
+
+    // Success case
+    resultDiv.textContent = "SUCCESSFUL";
+    resultDiv.style.color = "#00ff88";
+    resultDiv.classList.add('show');
+
+    // Optional: clear fields after success
+    // document.getElementById('name').value = '';
+    // document.getElementById('score').value = '';
+
+    // Fade out after a few seconds
+    setTimeout(() => {
+        resultDiv.classList.remove('show');
+    }, 3000);
+}
+</script>
 
 </body>
 </html>
