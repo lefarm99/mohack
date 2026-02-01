@@ -228,7 +228,7 @@
         if (response.redirected) {
           window.location.href = response.url;  // follow the redirect
         } else {
-  // fallback
+          console.log(response);
         }
 
         showMessage(`Submitted! → ${name} | ${roundedScore} pts | ${turns} turns`, 'success');
