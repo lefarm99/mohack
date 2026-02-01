@@ -1,14 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Demo Project</title>
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
-    <h1>Hello World</h1>
-    <p>This page is hosted using GitHub Pages!</p>
-    <script src="./script.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ACCESS//HACKGRID v0.13</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      color: #00ff41;
+      font-family: 'Courier New', Courier, monospace;
+      height: 100vh;
+      overflow: hidden;
+      background-image: 
+        linear-gradient(rgba(0,255,65,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,65,0.08) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 30px;
+      border: 2px solid #00ff41;
+      box-shadow: 0 0 30px rgba(0,255,65,0.4);
+      background: rgba(0,0,0,0.85);
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 35px;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 2.8rem;
+      text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+      letter-spacing: 6px;
+      animation: flicker 4s infinite alternate;
+    }
+
+    .header .version {
+      font-size: 1.1rem;
+      opacity: 0.7;
+      position: absolute;
+      right: 0;
+      top: 10px;
+    }
+
+    .scanline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        to bottom,
+        transparent 50%,
+        rgba(0,255,65,0.12) 50%,
+        rgba(0,255,65,0.08) 100%
+      );
+      background-size: 100% 6px;
+      pointer-events: none;
+      animation: scan 8s linear infinite;
+    }
+
+    .input-group {
+      margin: 25px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    label {
+      font-size: 1.3rem;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0.9;
+    }
+
+    input[type="text"] {
+      background: #0a0a0a;
+      color: #00ff41;
+      border: 1px solid #00cc33;
+      padding: 14px 18px;
+      font-family: 'Courier New', monospace;
+      font-size: 1.3rem;
+      width: 100%;
+      outline: none;
+      box-shadow: inset 0 0 10px rgba(0,255,65,0.15);
+      transition: all 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #00ff41;
+      box-shadow: 0 0 15px rgba(0,255,65,0.5);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 45px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      font-size: 1.2rem;
+      font-family: 'Courier New', monospace;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      cursor: pointer;
+      border: 2px solid;
+      background: transparent;
+      transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-green {
+      color: #00ff41;
+      border-color: #00ff41;
+    }
+
+    .btn-red {
+      color: #ff2a6d;
+      border-color: #ff2a6d;
+    }
+
+    .btn-submit {
+      color: #00eaff;
+      border-color: #00eaff;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 25px currentColor;
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+    }
+
+    /* CRT flicker effect */
+    @keyframes flicker {
+      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+        opacity: 1;
+      }
+      20%, 24%, 55% {
+        text-shadow: none;
+        opacity: 0.6;
+      }
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    .status {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 1.1rem;
+      opacity: 0.7;
+      min-height: 1.5em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="scanline"></div>
+
+    <div class="header">
+      <h1>ACCESS//HACKGRID</h1>
+      <span class="version">v0.13 - UNAUTHORIZED ACCESS DETECTED</span>
+    </div>
+
+    <div class="input-group">
+      <label for="name">> ENTER HANDLE / ALIAS:</label>
+      <input type="text" id="name" placeholder="e.g. shadowbyte, neo, zero_cool" autocomplete="off">
+    </div>
+
+    <div class="input-group">
+      <label for="score">> INPUT SCORE / LEVEL:</label>
+      <input type="text" id="score" placeholder="1337, 42069, 999999" autocomplete="off">
+    </div>
+
+    <div class="buttons">
+      <button class="btn btn-green" onclick="alert('Name field activated')">INPUT NAME</button>
+      <button class="btn btn-green" onclick="alert('Score field activated')">INPUT SCORE</button>
+      <button class="btn btn-submit" onclick="submitData()">SUBMIT // EXECUTE</button>
+    </div>
+
+    <div class="status" id="status">Awaiting input sequence...</div>
+  </div>
+
+  <script>
+    function submitData() {
+      const name = document.getElementById('name').value.trim();
+      const score = document.getElementById('score').value.trim();
+      const status = document.getElementById('status');
+
+      if (!name || !score) {
+        status.innerHTML = "ERROR: BOTH FIELDS REQUIRED. ACCESS DENIED.";
+        status.style.color = "#ff2a6d";
+        return;
+      }
+
+      status.innerHTML = `TRANSMISSION SENT → [${name}] @ ${score} pts`;
+      status.style.color = "#00ff41";
+
+      // Optional: you can later send this to a server with fetch()
+      console.log("Submitted:", { name, score });
+    }
+  </script>
+
+</body>
 </html>
