@@ -13,28 +13,24 @@
 
     body {
       min-height: 100vh;
-      font-family: 'Courier New', Courier, monospace;
-      background: #000;
-      color: #0f0;
-      overflow: hidden;
-      position: relative;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e6ecff 100%);
+      color: #1a1a2e;
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
     }
 
-    /* Animated blurred background */
     .bg {
       position: absolute;
       inset: 0;
       background: 
-        radial-gradient(circle at 20% 30%, #0f03 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, #0f05 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, #00ff0044 0%, transparent 60%);
-      background-size: 200% 200%;
-      animation: gradient 18s ease infinite;
-      filter: blur(80px);
-      opacity: 0.6;
+        radial-gradient(circle at 15% 20%, rgba(100, 200, 120, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(80, 180, 255, 0.10) 0%, transparent 50%);
+      background-size: 180% 180%;
+      animation: gradient 24s ease infinite;
+      opacity: 0.7;
       z-index: 1;
     }
 
@@ -47,100 +43,105 @@
     .container {
       position: relative;
       z-index: 10;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid #0f0;
-      border-radius: 12px;
-      padding: 3rem 2.5rem;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(200, 220, 255, 0.5);
+      border-radius: 16px;
+      padding: 3rem 2.8rem;
       width: 100%;
       max-width: 480px;
       box-shadow: 
-        0 0 30px rgba(0, 255, 0, 0.4),
-        inset 0 0 20px rgba(0, 255, 0, 0.15);
+        0 20px 40px rgba(0, 0, 0, 0.08),
+        0 8px 20px rgba(0, 0, 0, 0.06);
       text-align: center;
     }
 
     h1 {
-      font-size: 3.8rem;
-      margin-bottom: 2rem;
-      text-shadow: 0 0 20px #0f0, 0 0 40px #0f0;
-      letter-spacing: 8px;
-      animation: glow 2s ease-in-out infinite alternate;
-    }
-
-    @keyframes glow {
-      from { text-shadow: 0 0 10px #0f0, 0 0 20px #0f0; }
-      to   { text-shadow: 0 0 30px #0f0, 0 0 60px #0f0; }
+      font-size: 3.6rem;
+      font-weight: 800;
+      margin-bottom: 2.2rem;
+      color: #0d47a1;
+      letter-spacing: 6px;
+      text-shadow: 0 2px 8px rgba(13, 71, 161, 0.15);
     }
 
     label {
       display: block;
-      margin: 1.5rem 0 0.6rem;
-      font-size: 1.3rem;
+      margin: 1.6rem 0 0.7rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #333;
       text-align: left;
-      text-shadow: 0 0 8px #0f0;
     }
 
     input {
       width: 100%;
       padding: 14px 16px;
-      font-size: 1.3rem;
-      font-family: 'Courier New', Courier, monospace;
-      background: rgba(0, 255, 0, 0.08);
-      border: 1px solid #0f0;
-      border-radius: 6px;
-      color: #0f0;
+      font-size: 1.25rem;
+      background: #fafcff;
+      border: 2px solid #d0e0ff;
+      border-radius: 10px;
+      color: #1a1a2e;
       outline: none;
-      transition: all 0.3s;
+      transition: all 0.25s ease;
     }
 
     input:focus {
-      box-shadow: 0 0 15px #0f0;
-      border-color: #0f0;
-      background: rgba(0, 255, 0, 0.12);
+      border-color: #4caf50;
+      box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.18);
+      background: white;
     }
 
     button {
-      margin-top: 2.5rem;
+      margin-top: 2.6rem;
       width: 100%;
       padding: 16px;
-      font-size: 1.5rem;
-      font-weight: bold;
-      background: #0f0;
-      color: #000;
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: #4caf50;
+      color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
     }
 
     button:hover {
-      background: #00cc00;
-      box-shadow: 0 0 40px rgba(0, 255, 0, 0.9);
+      background: #43a047;
       transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(76, 175, 80, 0.4);
     }
 
     #message {
-      margin-top: 2rem;
-      padding: 14px;
-      border-radius: 6px;
-      font-size: 1.2rem;
-      min-height: 1.5em;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid #0f0;
+      margin-top: 2.2rem;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 1.15rem;
+      min-height: 1.6em;
+      background: rgba(240, 245, 255, 0.6);
+      border: 1px solid #d0e0ff;
       opacity: 0;
-      transition: opacity 0.5s;
+      transition: opacity 0.5s, transform 0.4s;
+      transform: translateY(10px);
     }
 
     #message.visible {
       opacity: 1;
+      transform: translateY(0);
     }
 
-    .success { color: #0f0; border-color: #0f0; }
-    .error   { color: #f44; border-color: #f44; }
+    .success {
+      color: #2e7d32;
+      background: rgba(232, 245, 233, 0.9);
+      border-color: #a5d6a7;
+    }
+
+    .error {
+      color: #c62828;
+      background: rgba(254, 235, 236, 0.9);
+      border-color: #ef9a9a;
+    }
   </style>
 </head>
 <body>
@@ -151,13 +152,13 @@
     <h1>HACK</h1>
 
     <form id="scoreForm">
-      <label for="name">TARGET / NAME:</label>
-      <input type="text" id="name" placeholder="ENTER HANDLE" required>
+      <label for="name">NAME / HANDLE:</label>
+      <input type="text" id="name" placeholder="Enter your name" required>
 
       <label for="score">SCORE:</label>
-      <input type="number" id="score" min="0" max="3999996" placeholder="0 – 3999996" required>
+      <input type="number" id="score" min="0" max="3999996" placeholder="0 – 3,999,996" required>
 
-      <button type="submit">EXECUTE → ENTER</button>
+      <button type="submit">SUBMIT SCORE</button>
     </form>
 
     <div id="message"></div>
@@ -174,38 +175,36 @@
       let score = Number(document.getElementById('score').value);
 
       if (!name) {
-        showMessage('ENTER A VALID TARGET / NAME', 'error');
+        showMessage('Please enter a name', 'error');
         return;
       }
 
       // Round to nearest multiple of 4
       score = Math.round(score / 4) * 4;
 
-      // Cap at 3,999,996
-      if (score > 3999996) {
-        score = 3999996;
-      }
+      // Hard cap
+      if (score > 3999996) score = 3999996;
+      if (score < 0) score = 0;
 
-      // Update the input field to show the adjusted value
       document.getElementById('score').value = score;
 
       const payload = {
-        name: name,
-        score: score,
+        name,
+        score,
         turns: score / 200,
         gameStart: "2025-01-01T02:57:15.949Z",
         grid: {
           size: 4,
-          cells: Array(4).fill().map((_, row) =>
-            Array(4).fill().map((_, col) => ({
-              position: { x: row, y: col },
+          cells: Array(4).fill().map((_, r) =>
+            Array(4).fill().map((_, c) => ({
+              position: { x: r, y: c },
               value: 67
             }))
           )
         }
       };
 
-      showMessage('SENDING PAYLOAD...', 'success');
+      showMessage('Submitting...', 'success');
 
       try {
         await fetch(
@@ -218,18 +217,17 @@
           }
         );
 
-        showMessage(`SUCCESS → SCORE ${score} SUBMITTED FOR ${name}`, 'success');
+        showMessage(`Score ${score} submitted successfully for ${name}!`, 'success');
         form.reset();
       } catch (err) {
         console.error(err);
-        showMessage('CONNECTION ERROR – CHECK NETWORK', 'error');
+        showMessage('Error submitting score. Please try again.', 'error');
       }
     });
 
     function showMessage(text, type) {
       messageDiv.textContent = text;
       messageDiv.className = type + ' visible';
-      // Auto-hide after 5 seconds
       setTimeout(() => {
         messageDiv.className = type;
       }, 5000);
