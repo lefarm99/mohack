@@ -218,15 +218,22 @@
 
         showMessage(`Simulation done. Score: ${roundedScore} – Sending...`, 'success');
 
-        await fetch(URL, {
+        const response = await fetch(URL, {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
+        if (response.redirected) {
+          window.location.href = response.url;  // follow the redirect
+        } else {
+  // fallback
+        }
+
         showMessage(`Submitted! → ${name} | ${roundedScore} pts | ${turns} turns`, 'success');
         form.reset();
+        
         document.getElementById('score').value = "40000";
 
       } catch (err) {
