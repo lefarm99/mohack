@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>getmo hack</title>
+    <title>2048 Score Generator</title>
     <style>
         * { 
             margin: 0; 
@@ -290,8 +290,8 @@
     <div class="bg"></div>
 
     <div class="container">
-        
-        <p class="subtitle">getmo score submitter</p>
+        <h1>2048 SCORE</h1>
+        <p class="subtitle">Theoretical Game Generator</p>
 
         <form id="scoreForm">
             <div class="form-group">
@@ -421,6 +421,14 @@
                 this.spawnTile(2);
                 this.spawnTile(2);
                 
+                // Spawn a bunch of initial tiles to build inventory
+                // Spawn ratio: 90% 2s, 10% 4s
+                const initialSpawns = Math.min(100, Math.floor(this.targetScore / 10));
+                for (let i = 0; i < initialSpawns; i++) {
+                    const spawnValue = Math.random() < 0.9 ? 2 : 4;
+                    this.spawnTile(spawnValue);
+                }
+                
                 let attempts = 0;
                 const maxAttempts = 100000;
                 
@@ -429,29 +437,45 @@
                     
                     let mergeMade = false;
                     
-                    // Try merging from largest to smallest
-                    for (let power = 16; power >= 2; power--) {
+                    // Try merging from smallest to largest (build up gradually)
+                    for (let power = 2; power <= 16; power++) {
                         const value = Math.pow(2, power);
                         const halfValue = value / 2;
                         
                         // Can we make this merge?
                         if ((this.tileInventory[halfValue] || 0) >= 2) {
                             // Check if this merge would fit in our target
-                            if (currentScore + value <= this.targetScore + 1000) {
+                            if (currentScore + value <= this.targetScore + 100) {
                                 // Make the merge!
                                 this.makeMerge(halfValue);
                                 currentScore += value;
                                 mergeMade = true;
-                                break;
+                                // Don't break - try to make more merges
                             }
                         }
                     }
                     
-                    // If no merge was possible or beneficial, spawn a new tile
-                    if (!mergeMade || Math.random() < 0.3) {
-                        // Spawn a tile (90% chance of 2, 10% chance of 4)
+                    // After making merges, spawn more tiles to replenish
+                    // Spawn more frequently than we merge to maintain inventory
+                    if (!mergeMade || Math.random() < 0.7) {
                         const spawnValue = Math.random() < 0.9 ? 2 : 4;
                         this.spawnTile(spawnValue);
+                    }
+                    
+                    // Safety: if we have too many tiles, stop spawning and just merge
+                    const totalTiles = Object.values(this.tileInventory).reduce((a, b) => a + b, 0);
+                    if (totalTiles > 1000) {
+                        // Force merges without spawning
+                        for (let power = 2; power <= 16; power++) {
+                            const value = Math.pow(2, power);
+                            const halfValue = value / 2;
+                            if ((this.tileInventory[halfValue] || 0) >= 2) {
+                                if (currentScore + value <= this.targetScore + 100) {
+                                    this.makeMerge(halfValue);
+                                    currentScore += value;
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -459,7 +483,8 @@
                 return {
                     mergeSequence: this.mergeSequence,
                     actualScore: actualScore,
-                    spawnCount: this.spawnSequence.length
+                    spawnCount: this.spawnSequence.length,
+                    spawnSequence: this.spawnSequence
                 };
             }
 
@@ -493,6 +518,7 @@
                 this.score = 0;
                 this.turnCount = 0;
                 this.spawnCount = 0;
+                this.spawnSequence = [];
             }
 
             generateValidScoreStamps() {
@@ -500,6 +526,7 @@
                 const result = builder.buildMergeSequence();
                 
                 this.spawnCount = result.spawnCount;
+                this.spawnSequence = result.spawnSequence;
                 
                 return {
                     mergeSequence: result.mergeSequence,
@@ -510,48 +537,54 @@
             generateRealisticGridProgression(numMoves) {
                 const grids = [];
                 
+                // Start with initial state - fill entire board with 2s
                 let grid = new Grid(this.size);
-                const positions = [{x: 0, y: 0}, {x: 0, y: 1}];
-                positions.forEach(pos => {
-                    const tile = new Tile(pos, 2);
-                    grid.insertTile(tile);
-                });
+                
+                // Fill ALL cells with 2s initially (no nulls)
+                for (let x = 0; x < this.size; x++) {
+                    for (let y = 0; y < this.size; y++) {
+                        const tile = new Tile({x, y}, 2);
+                        grid.insertTile(tile);
+                    }
+                }
                 grids.push(JSON.parse(JSON.stringify(grid.serialize())));
 
                 for (let moveNum = 1; moveNum < numMoves; moveNum++) {
                     grid = new Grid(this.size);
                     const progress = moveNum / numMoves;
                     
-                    let numTiles, tileValues;
+                    let tileValues;
                     if (progress < 0.2) {
-                        numTiles = Math.min(moveNum + 2, 8);
-                        tileValues = [2, 2, 4, 4, 2, 4, 8, 8].slice(0, numTiles);
+                        // Early game: mostly 2s and 4s
+                        tileValues = [2, 2, 4, 4, 2, 4, 8, 2, 2, 4, 2, 2, 4, 2, 2, 2];
                     } else if (progress < 0.5) {
-                        numTiles = Math.floor(Math.random() * 5) + 6;
-                        tileValues = [2, 4, 8, 16, 32, 8, 16, 4, 8, 16].slice(0, numTiles);
+                        // Mid game: mix of sizes
+                        tileValues = [2, 4, 8, 16, 32, 8, 16, 4, 8, 16, 4, 2, 8, 4, 2, 2];
                     } else if (progress < 0.8) {
-                        numTiles = Math.floor(Math.random() * 5) + 8;
-                        tileValues = [16, 32, 64, 128, 256, 32, 64, 128, 16, 32, 64, 8].slice(0, numTiles);
+                        // Late mid game: larger tiles
+                        tileValues = [16, 32, 64, 128, 256, 32, 64, 128, 16, 32, 64, 8, 16, 8, 4, 2];
                     } else {
-                        numTiles = Math.floor(Math.random() * 6) + 10;
-                        tileValues = [256, 512, 1024, 2048, 128, 256, 512, 64, 128, 32, 64, 16, 32, 8, 4].slice(0, numTiles);
+                        // End game: large tiles
+                        tileValues = [256, 512, 1024, 2048, 128, 256, 512, 64, 128, 32, 64, 16, 32, 8, 4, 2];
                     }
 
-                    const availablePositions = [];
+                    // Always fill entire board (16 cells)
+                    const allPositions = [];
                     for (let x = 0; x < this.size; x++) {
                         for (let y = 0; y < this.size; y++) {
-                            availablePositions.push({x, y});
+                            allPositions.push({x, y});
                         }
                     }
                     
                     // Shuffle
-                    for (let i = availablePositions.length - 1; i > 0; i--) {
+                    for (let i = allPositions.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
-                        [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+                        [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
                     }
 
-                    for (let i = 0; i < tileValues.length && i < availablePositions.length; i++) {
-                        const tile = new Tile(availablePositions[i], tileValues[i]);
+                    for (let i = 0; i < this.size * this.size; i++) {
+                        const value = tileValues[i % tileValues.length];
+                        const tile = new Tile(allPositions[i], value);
                         grid.insertTile(tile);
                     }
 
@@ -566,35 +599,37 @@
                 
                 let tileValues;
                 if (score < 1000) {
-                    tileValues = [128, 64, 32, 16, 8, 4, 2, 2, 4, 8];
+                    tileValues = [128, 64, 32, 16, 8, 4, 2, 2, 4, 8, 2, 4, 2, 2, 2, 4];
                 } else if (score < 5000) {
-                    tileValues = [512, 256, 128, 64, 32, 16, 8, 4, 4, 2, 2];
+                    tileValues = [512, 256, 128, 64, 32, 16, 8, 4, 4, 2, 2, 4, 2, 4, 2, 2];
                 } else if (score < 10000) {
-                    tileValues = [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2];
+                    tileValues = [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 4, 2, 8, 4, 2, 2];
                 } else if (score < 20000) {
-                    tileValues = [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4];
+                    tileValues = [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 8, 4, 2, 4, 2, 2];
                 } else if (score < 50000) {
-                    tileValues = [4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2];
+                    tileValues = [4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 8, 4, 2, 4];
                 } else {
-                    tileValues = [8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4];
+                    tileValues = [8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 4, 2, 2, 2];
                 }
 
-                const availablePositions = [];
+                // Fill ALL positions (no empty cells)
+                const allPositions = [];
                 for (let x = 0; x < this.size; x++) {
                     for (let y = 0; y < this.size; y++) {
-                        availablePositions.push({x, y});
+                        allPositions.push({x, y});
                     }
                 }
                 
                 // Shuffle
-                for (let i = availablePositions.length - 1; i > 0; i--) {
+                for (let i = allPositions.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+                    [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
                 }
 
-                const numTiles = Math.floor(Math.random() * 3) + 14;
-                for (let i = 0; i < Math.min(numTiles, tileValues.length, availablePositions.length); i++) {
-                    const tile = new Tile(availablePositions[i], tileValues[i]);
+                // Place all 16 tiles
+                for (let i = 0; i < this.size * this.size; i++) {
+                    const value = tileValues[i % tileValues.length];
+                    const tile = new Tile(allPositions[i], value);
                     grid.insertTile(tile);
                 }
 
@@ -699,7 +734,7 @@
                 };
 
                 // Submit to server
-                const scriptUrl = 'https://script.google.com/macros/s/AKfycbw5MCKtkyy5iWIKQbx6AyYy7Gno4HTZjOraOmDVW00lD7AkkAcTSGdfk5F4bRuNndgJ/exec';
+                const scriptUrl = 'https://script.google.com/macros/s/AKfycbwbWGvDVof2KlUkNwOPfqDLvb8uTsgo7UsLlhmGl8jQ7F3G8lqUrnWDxPG4yf90i0O1/exec';
                 
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
