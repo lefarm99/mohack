@@ -406,6 +406,85 @@
             }
         }
 
+        class ValidMergeSequenceBuilder {
+            constructor(targetScore) {
+                this.targetScore = targetScore;
+                this.tileInventory = {};
+                this.mergeSequence = [];
+                this.spawnSequence = [];
+            }
+
+            buildMergeSequence() {
+                let currentScore = 0;
+                
+                // Start with 2 initial tiles (both 2s)
+                this.spawnTile(2);
+                this.spawnTile(2);
+                
+                let attempts = 0;
+                const maxAttempts = 100000;
+                
+                while (currentScore < this.targetScore && attempts < maxAttempts) {
+                    attempts++;
+                    
+                    let mergeMade = false;
+                    
+                    // Try merging from largest to smallest
+                    for (let power = 16; power >= 2; power--) {
+                        const value = Math.pow(2, power);
+                        const halfValue = value / 2;
+                        
+                        // Can we make this merge?
+                        if ((this.tileInventory[halfValue] || 0) >= 2) {
+                            // Check if this merge would fit in our target
+                            if (currentScore + value <= this.targetScore + 1000) {
+                                // Make the merge!
+                                this.makeMerge(halfValue);
+                                currentScore += value;
+                                mergeMade = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // If no merge was possible or beneficial, spawn a new tile
+                    if (!mergeMade || Math.random() < 0.3) {
+                        // Spawn a tile (90% chance of 2, 10% chance of 4)
+                        const spawnValue = Math.random() < 0.9 ? 2 : 4;
+                        this.spawnTile(spawnValue);
+                    }
+                }
+                
+                const actualScore = this.mergeSequence.reduce((a, b) => a + b, 0);
+                return {
+                    mergeSequence: this.mergeSequence,
+                    actualScore: actualScore,
+                    spawnCount: this.spawnSequence.length
+                };
+            }
+
+            spawnTile(value) {
+                this.spawnSequence.push(value);
+                this.tileInventory[value] = (this.tileInventory[value] || 0) + 1;
+            }
+
+            makeMerge(halfValue) {
+                const fullValue = halfValue * 2;
+                
+                // Remove two tiles of halfValue
+                this.tileInventory[halfValue] -= 2;
+                if (this.tileInventory[halfValue] === 0) {
+                    delete this.tileInventory[halfValue];
+                }
+                
+                // Add one tile of fullValue
+                this.tileInventory[fullValue] = (this.tileInventory[fullValue] || 0) + 1;
+                
+                // Record the merge
+                this.mergeSequence.push(fullValue);
+            }
+        }
+
         class TheoreticalGameGenerator {
             constructor(targetScore, size = 4) {
                 this.targetScore = targetScore;
@@ -413,32 +492,19 @@
                 this.grid = new Grid(size);
                 this.score = 0;
                 this.turnCount = 0;
+                this.spawnCount = 0;
             }
 
-            generateRealisticMergeSequence(targetScore) {
-                const scoreStamps = [];
-                let remaining = targetScore;
-                let power = 2;
-
-                while (remaining > 0 && power <= 17) {
-                    const value = Math.pow(2, power);
-                    const maxCount = Math.max(1, Math.floor(20 / power));
-                    
-                    let count = 0;
-                    while (remaining >= value && count < maxCount) {
-                        scoreStamps.push(value);
-                        remaining -= value;
-                        count++;
-                    }
-                    power++;
-                }
-
-                while (remaining >= 4) {
-                    scoreStamps.push(4);
-                    remaining -= 4;
-                }
-
-                return scoreStamps;
+            generateValidScoreStamps() {
+                const builder = new ValidMergeSequenceBuilder(this.targetScore);
+                const result = builder.buildMergeSequence();
+                
+                this.spawnCount = result.spawnCount;
+                
+                return {
+                    mergeSequence: result.mergeSequence,
+                    actualScore: result.actualScore
+                };
             }
 
             generateRealisticGridProgression(numMoves) {
@@ -556,29 +622,38 @@
                 return timeStamps;
             }
 
-            estimateMovesFromScore(score) {
-                if (score < 1000) {
-                    return Math.floor(Math.random() * 101) + 50;
-                } else if (score < 5000) {
-                    const movesPerThousand = Math.floor(Math.random() * 41) + 80;
-                    return Math.floor((score / 1000) * movesPerThousand);
-                } else {
-                    const movesPerThousand = Math.floor(Math.random() * 51) + 100;
-                    return Math.floor((score / 1000) * movesPerThousand);
-                }
+            estimateMovesFromSpawns(spawnCount) {
+                // In 2048, you spawn one tile per move (after the initial 2)
+                // So moves = spawns - 2 (for the initial tiles)
+                return Math.max(spawnCount - 2, 1);
             }
 
             generateGameData() {
-                const scoreStamps = this.generateRealisticMergeSequence(this.targetScore);
-                const actualScore = scoreStamps.reduce((a, b) => a + b, 0);
+                console.log('🎯 Generating theoretical game data for score:', this.targetScore);
+                
+                // Generate VALID score stamps using new algorithm
+                const result = this.generateValidScoreStamps();
+                const scoreStamps = result.mergeSequence;
+                const actualScore = result.actualScore;
                 this.score = actualScore;
 
-                this.turnCount = this.estimateMovesFromScore(actualScore);
+                console.log('✓ Generated', scoreStamps.length, 'merges');
+                console.log('✓ Actual score from merges:', actualScore);
+                console.log('✓ Total spawns:', this.spawnCount);
+
+                // Calculate number of moves from spawns
+                this.turnCount = this.estimateMovesFromSpawns(this.spawnCount);
+                console.log('✓ Calculated moves:', this.turnCount);
+
                 const grids = this.generateRealisticGridProgression(this.turnCount);
+                console.log('✓ Generated', grids.length, 'grid states');
+
                 this.grid = this.generateFinalGrid(actualScore);
+                console.log('✓ Generated final grid');
                 
                 const timeStamps = this.generateTimeStamps(this.turnCount);
                 const gameStart = timeStamps[0];
+                console.log('✓ Generated', timeStamps.length, 'timestamps');
 
                 return {
                     score: this.score,
