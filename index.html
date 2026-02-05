@@ -290,7 +290,7 @@
     <div class="bg"></div>
 
     <div class="container">
-        <p class="subtitle">mohack score submitter</p>
+        <p class="subtitle">getmo score submitter</p>
 
         <form id="scoreForm">
             <div class="form-group">
@@ -336,7 +336,7 @@
     </div>
 
     <script>
-        // Game generation logic converted from Python
+        // Game generation logic
         class Tile {
             constructor(position, value = 2) {
                 this.x = position.x;
@@ -353,9 +353,9 @@
         }
 
         class Grid {
-            constructor(size, previousState = null) {
+            constructor(size) {
                 this.size = size;
-                this.cells = previousState ? this.fromState(previousState) : this.empty();
+                this.cells = this.empty();
             }
 
             empty() {
@@ -364,20 +364,6 @@
                     const row = [];
                     for (let y = 0; y < this.size; y++) {
                         row.push(null);
-                    }
-                    cells.push(row);
-                }
-                return cells;
-            }
-
-            fromState(state) {
-                const cells = [];
-                for (let x = 0; x < this.size; x++) {
-                    const row = [];
-                    for (let y = 0; y < this.size; y++) {
-                        const tileData = state[x][y];
-                        const tile = tileData ? new Tile(tileData.position, tileData.value) : null;
-                        row.push(tile);
                     }
                     cells.push(row);
                 }
@@ -416,12 +402,11 @@
             buildMergeSequence() {
                 let currentScore = 0;
                 
-                // Start with 2 initial tiles (both 2s)
+                // Start with 2 initial tiles
                 this.spawnTile(2);
                 this.spawnTile(2);
                 
-                // Spawn a bunch of initial tiles to build inventory
-                // Spawn ratio: 90% 2s, 10% 4s
+                // Spawn initial tiles
                 const initialSpawns = Math.min(100, Math.floor(this.targetScore / 10));
                 for (let i = 0; i < initialSpawns; i++) {
                     const spawnValue = Math.random() < 0.9 ? 2 : 4;
@@ -429,52 +414,26 @@
                 }
                 
                 let attempts = 0;
-                const maxAttempts = 100000;
-                
-                while (currentScore < this.targetScore && attempts < maxAttempts) {
+                while (currentScore < this.targetScore && attempts < 100000) {
                     attempts++;
                     
                     let mergeMade = false;
-                    
-                    // Try merging from smallest to largest (build up gradually)
                     for (let power = 2; power <= 16; power++) {
                         const value = Math.pow(2, power);
                         const halfValue = value / 2;
                         
-                        // Can we make this merge?
                         if ((this.tileInventory[halfValue] || 0) >= 2) {
-                            // Check if this merge would fit in our target
                             if (currentScore + value <= this.targetScore + 100) {
-                                // Make the merge!
                                 this.makeMerge(halfValue);
                                 currentScore += value;
                                 mergeMade = true;
-                                // Don't break - try to make more merges
                             }
                         }
                     }
                     
-                    // After making merges, spawn more tiles to replenish
-                    // Spawn more frequently than we merge to maintain inventory
                     if (!mergeMade || Math.random() < 0.7) {
                         const spawnValue = Math.random() < 0.9 ? 2 : 4;
                         this.spawnTile(spawnValue);
-                    }
-                    
-                    // Safety: if we have too many tiles, stop spawning and just merge
-                    const totalTiles = Object.values(this.tileInventory).reduce((a, b) => a + b, 0);
-                    if (totalTiles > 1000) {
-                        // Force merges without spawning
-                        for (let power = 2; power <= 16; power++) {
-                            const value = Math.pow(2, power);
-                            const halfValue = value / 2;
-                            if ((this.tileInventory[halfValue] || 0) >= 2) {
-                                if (currentScore + value <= this.targetScore + 100) {
-                                    this.makeMerge(halfValue);
-                                    currentScore += value;
-                                }
-                            }
-                        }
                     }
                 }
                 
@@ -482,8 +441,7 @@
                 return {
                     mergeSequence: this.mergeSequence,
                     actualScore: actualScore,
-                    spawnCount: this.spawnSequence.length,
-                    spawnSequence: this.spawnSequence
+                    spawnCount: this.spawnSequence.length
                 };
             }
 
@@ -494,83 +452,104 @@
 
             makeMerge(halfValue) {
                 const fullValue = halfValue * 2;
-                
-                // Remove two tiles of halfValue
                 this.tileInventory[halfValue] -= 2;
                 if (this.tileInventory[halfValue] === 0) {
                     delete this.tileInventory[halfValue];
                 }
-                
-                // Add one tile of fullValue
                 this.tileInventory[fullValue] = (this.tileInventory[fullValue] || 0) + 1;
-                
-                // Record the merge
                 this.mergeSequence.push(fullValue);
             }
         }
 
-        class TheoreticalGameGenerator {
-            constructor(targetScore, size = 4) {
-                this.targetScore = targetScore;
-                this.size = size;
-                this.grid = new Grid(size);
-                this.score = 0;
-                this.turnCount = 0;
-                this.spawnCount = 0;
-                this.spawnSequence = [];
+        class FirebaseSubmitter {
+            constructor() {
+                this.apiKey = "AIzaSyBEUEKrOEBm3RjxIPdk25zNfkqZHYXMCWA";
+                this.databaseUrl = "https://getmo-79b09-default-rtdb.firebaseio.com";
+                this.authUrl = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=";
+                this.idToken = null;
+                this.uid = null;
             }
 
-            generateValidScoreStamps() {
-                const builder = new ValidMergeSequenceBuilder(this.targetScore);
-                const result = builder.buildMergeSequence();
+            async authenticate() {
+                console.log('🔐 Authenticating with Firebase...');
                 
-                this.spawnCount = result.spawnCount;
-                this.spawnSequence = result.spawnSequence;
-                
-                return {
-                    mergeSequence: result.mergeSequence,
-                    actualScore: result.actualScore
+                const url = `${this.authUrl}${this.apiKey}`;
+                const payload = {
+                    returnSecureToken: true
                 };
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const data = await response.json();
+                    this.idToken = data.idToken;
+                    this.uid = data.localId;
+                    
+                    console.log('✅ Authenticated successfully!');
+                    console.log(`   UID: ${this.uid.substring(0, 10)}...`);
+                    return true;
+                    
+                } catch (error) {
+                    console.error('❌ Authentication failed:', error);
+                    return false;
+                }
             }
 
-            generateRealisticGridProgression(numMoves) {
-                const grids = [];
+            generateGameData(targetScore) {
+                console.log(`🎮 Generating game data for score: ${targetScore}`);
                 
-                // Start with initial state - fill entire board with 2s
-                let grid = new Grid(this.size);
+                // Build merge sequence
+                const builder = new ValidMergeSequenceBuilder(targetScore);
+                const result = builder.buildMergeSequence();
+                const scoreStamps = result.mergeSequence;
+                const actualScore = result.actualScore;
+                const spawnCount = result.spawnCount;
                 
-                // Fill ALL cells with 2s initially (no nulls)
-                for (let x = 0; x < this.size; x++) {
-                    for (let y = 0; y < this.size; y++) {
-                        const tile = new Tile({x, y}, 2);
-                        grid.insertTile(tile);
-                    }
+                console.log(`   Merges: ${scoreStamps.length}`);
+                console.log(`   Actual score: ${actualScore}`);
+                console.log(`   Spawns: ${spawnCount}`);
+                
+                // Calculate turns
+                const turnCount = Math.max(spawnCount - 2, 1);
+                
+                // Generate timestamps
+                const gameDurationMinutes = (turnCount * (Math.random() * 3 + 2)) / 60;
+                const gameStart = new Date(Date.now() - gameDurationMinutes * 60 * 1000);
+                const timeStamps = [gameStart];
+                
+                let currentTime = new Date(gameStart);
+                for (let i = 0; i < turnCount; i++) {
+                    const interval = Math.random() < 0.1 
+                        ? Math.random() * 10 + 5 
+                        : Math.random() * 4 + 1;
+                    currentTime = new Date(currentTime.getTime() + interval * 1000);
+                    timeStamps.push(currentTime);
                 }
-                grids.push(JSON.parse(JSON.stringify(grid.serialize())));
-
-                for (let moveNum = 1; moveNum < numMoves; moveNum++) {
-                    grid = new Grid(this.size);
-                    const progress = moveNum / numMoves;
+                
+                // Generate grids
+                const grids = [];
+                for (let moveNum = 0; moveNum < turnCount; moveNum++) {
+                    const grid = new Grid(4);
+                    const progress = moveNum / turnCount;
                     
                     let tileValues;
                     if (progress < 0.2) {
-                        // Early game: mostly 2s and 4s
                         tileValues = [2, 2, 4, 4, 2, 4, 8, 2, 2, 4, 2, 2, 4, 2, 2, 2];
                     } else if (progress < 0.5) {
-                        // Mid game: mix of sizes
                         tileValues = [2, 4, 8, 16, 32, 8, 16, 4, 8, 16, 4, 2, 8, 4, 2, 2];
                     } else if (progress < 0.8) {
-                        // Late mid game: larger tiles
                         tileValues = [16, 32, 64, 128, 256, 32, 64, 128, 16, 32, 64, 8, 16, 8, 4, 2];
                     } else {
-                        // End game: large tiles
                         tileValues = [256, 512, 1024, 2048, 128, 256, 512, 64, 128, 32, 64, 16, 32, 8, 4, 2];
                     }
-
-                    // Always fill entire board (16 cells)
+                    
                     const allPositions = [];
-                    for (let x = 0; x < this.size; x++) {
-                        for (let y = 0; y < this.size; y++) {
+                    for (let x = 0; x < 4; x++) {
+                        for (let y = 0; y < 4; y++) {
                             allPositions.push({x, y});
                         }
                     }
@@ -580,41 +559,45 @@
                         const j = Math.floor(Math.random() * (i + 1));
                         [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
                     }
-
-                    for (let i = 0; i < this.size * this.size; i++) {
-                        const value = tileValues[i % tileValues.length];
-                        const tile = new Tile(allPositions[i], value);
+                    
+                    for (let i = 0; i < 16; i++) {
+                        const tile = new Tile(allPositions[i], tileValues[i % tileValues.length]);
                         grid.insertTile(tile);
                     }
-
-                    grids.push(JSON.parse(JSON.stringify(grid.serialize())));
+                    
+                    grids.push(grid.serialize());
                 }
-
-                return grids;
-            }
-
-            generateFinalGrid(score) {
-                const grid = new Grid(this.size);
                 
-                let tileValues;
-                if (score < 1000) {
-                    tileValues = [128, 64, 32, 16, 8, 4, 2, 2, 4, 8, 2, 4, 2, 2, 2, 4];
-                } else if (score < 5000) {
-                    tileValues = [512, 256, 128, 64, 32, 16, 8, 4, 4, 2, 2, 4, 2, 4, 2, 2];
-                } else if (score < 10000) {
-                    tileValues = [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 4, 2, 8, 4, 2, 2];
-                } else if (score < 20000) {
-                    tileValues = [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 8, 4, 2, 4, 2, 2];
-                } else if (score < 50000) {
-                    tileValues = [4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 8, 4, 2, 4];
-                } else {
-                    tileValues = [8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 4, 2, 2, 2];
+                // Generate final grid
+                const biggestTile = scoreStamps.length > 0 ? Math.max(...scoreStamps) : 2;
+                const biggestTileCount = scoreStamps.filter(s => s === biggestTile).length;
+                
+                const finalGrid = new Grid(4);
+                const tileValues = [];
+                
+                for (let i = 0; i < biggestTileCount; i++) {
+                    tileValues.push(biggestTile);
                 }
-
-                // Fill ALL positions (no empty cells)
+                
+                let currentValue = biggestTile / 2;
+                let remaining = 16 - biggestTileCount;
+                
+                while (remaining > 0 && currentValue >= 2) {
+                    const numTiles = Math.min(Math.floor(Math.random() * 3) + 1, remaining);
+                    for (let i = 0; i < numTiles; i++) {
+                        tileValues.push(currentValue);
+                    }
+                    remaining -= numTiles;
+                    currentValue /= 2;
+                }
+                
+                while (tileValues.length < 16) {
+                    tileValues.push(2);
+                }
+                
                 const allPositions = [];
-                for (let x = 0; x < this.size; x++) {
-                    for (let y = 0; y < this.size; y++) {
+                for (let x = 0; x < 4; x++) {
+                    for (let y = 0; y < 4; y++) {
                         allPositions.push({x, y});
                     }
                 }
@@ -624,80 +607,82 @@
                     const j = Math.floor(Math.random() * (i + 1));
                     [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
                 }
-
-                // Place all 16 tiles
-                for (let i = 0; i < this.size * this.size; i++) {
-                    const value = tileValues[i % tileValues.length];
-                    const tile = new Tile(allPositions[i], value);
-                    grid.insertTile(tile);
-                }
-
-                return grid;
-            }
-
-            generateTimeStamps(numMoves, gameDurationMinutes = null) {
-                if (!gameDurationMinutes) {
-                    gameDurationMinutes = (numMoves * (Math.random() * 3 + 2)) / 60;
-                }
-
-                const startTime = new Date(Date.now() - gameDurationMinutes * 60 * 1000);
-                const timeStamps = [startTime];
                 
-                let currentTime = new Date(startTime);
-                for (let i = 0; i < numMoves; i++) {
-                    const interval = Math.random() < 0.1 
-                        ? Math.random() * 10 + 5 
-                        : Math.random() * 4 + 1;
-                    
-                    currentTime = new Date(currentTime.getTime() + interval * 1000);
-                    timeStamps.push(currentTime);
+                for (let i = 0; i < 16; i++) {
+                    const tile = new Tile(allPositions[i], tileValues[i]);
+                    finalGrid.insertTile(tile);
                 }
-
-                return timeStamps;
-            }
-
-            estimateMovesFromSpawns(spawnCount) {
-                // In 2048, you spawn one tile per move (after the initial 2)
-                // So moves = spawns - 2 (for the initial tiles)
-                return Math.max(spawnCount - 2, 1);
-            }
-
-            generateGameData() {
-                console.log('🎯 Generating theoretical game data for score:', this.targetScore);
                 
-                // Generate VALID score stamps using new algorithm
-                const result = this.generateValidScoreStamps();
-                const scoreStamps = result.mergeSequence;
-                const actualScore = result.actualScore;
-                this.score = actualScore;
-
-                console.log('✓ Generated', scoreStamps.length, 'merges');
-                console.log('✓ Actual score from merges:', actualScore);
-                console.log('✓ Total spawns:', this.spawnCount);
-
-                // Calculate number of moves from spawns
-                this.turnCount = this.estimateMovesFromSpawns(this.spawnCount);
-                console.log('✓ Calculated moves:', this.turnCount);
-
-                const grids = this.generateRealisticGridProgression(this.turnCount);
-                console.log('✓ Generated', grids.length, 'grid states');
-
-                this.grid = this.generateFinalGrid(actualScore);
-                console.log('✓ Generated final grid');
-                
-                const timeStamps = this.generateTimeStamps(this.turnCount);
-                const gameStart = timeStamps[0];
-                console.log('✓ Generated', timeStamps.length, 'timestamps');
-
                 return {
-                    score: this.score,
-                    turns: this.turnCount,
-                    gameStart: gameStart.toISOString(),
-                    grid: this.grid.serialize(),
+                    score: actualScore,
+                    turns: turnCount,
+                    gameStart: gameStart,
+                    grid: finalGrid,
                     grids: grids,
-                    timeStamps: timeStamps.map(ts => ts.toISOString()),
+                    timeStamps: timeStamps,
                     scoreStamps: scoreStamps
                 };
+            }
+
+            async submitScore(name, gameData) {
+                if (!this.idToken) {
+                    console.error('❌ Not authenticated!');
+                    return false;
+                }
+                
+                console.log(`📤 Submitting score for '${name}'...`);
+                
+                const timestamp = Date.now();
+                const gameStartTimestamp = gameData.gameStart.getTime();
+                
+                const scoreData = {
+                    name: name,
+                    score: gameData.score,
+                    turns: gameData.turns,
+                    timestamp: timestamp,
+                    gameStart: gameStartTimestamp,
+                    uid: this.uid,
+                    validation: {
+                        biggestTile: gameData.scoreStamps.length > 0 ? Math.max(...gameData.scoreStamps) : 2,
+                        totalMerges: gameData.scoreStamps.length,
+                        gameDuration: timestamp - gameStartTimestamp
+                    }
+                };
+                
+                try {
+                    const url = `${this.databaseUrl}/scores.json?auth=${this.idToken}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(scoreData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    console.log('✅ Score submitted successfully!');
+                    console.log(`   Firebase key: ${result.name}`);
+                    console.log(`   Score: ${gameData.score}`);
+                    console.log(`   Turns: ${gameData.turns}`);
+                    
+                    // Also record in userSubmissions
+                    const userSubmission = {
+                        timestamp: timestamp,
+                        score: gameData.score
+                    };
+                    
+                    const userUrl = `${this.databaseUrl}/userSubmissions/${this.uid}.json?auth=${this.idToken}`;
+                    await fetch(userUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userSubmission)
+                    });
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.error('❌ Submission failed:', error);
+                    return false;
+                }
             }
         }
 
@@ -722,41 +707,36 @@
             loadingText.classList.add('active');
 
             try {
-                // Generate game data
-                const generator = new TheoreticalGameGenerator(targetScore);
-                const gameData = generator.generateGameData();
-
-                // Prepare submission
-                const payload = {
-                    name: playerName,
-                    ...gameData
-                };
-
-                // Submit to server
-                const scriptUrl = 'https://script.google.com/macros/s/AKfycbwbWGvDVof2KlUkNwOPfqDLvb8uTsgo7UsLlhmGl8jQ7F3G8lqUrnWDxPG4yf90i0O1/exec';
+                // Initialize Firebase submitter
+                const submitter = new FirebaseSubmitter();
                 
-                const response = await fetch(scriptUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                    mode: 'no-cors'
-                });
-
-                // Show success
-                statusMessage.className = 'status-message success';
-                statusMessage.textContent = `✅ Score submitted successfully! Generated ${gameData.turns} moves with ${gameData.scoreStamps.length} merges.`;
-
-                // Reset form
-                document.getElementById('scoreForm').reset();
+                // Authenticate
+                const authenticated = await submitter.authenticate();
+                if (!authenticated) {
+                    throw new Error('Authentication failed');
+                }
+                
+                // Generate game data
+                const gameData = submitter.generateGameData(targetScore);
+                
+                // Submit to Firebase
+                const success = await submitter.submitScore(playerName, gameData);
+                
+                if (success) {
+                    statusMessage.className = 'status-message success';
+                    statusMessage.textContent = `✅ Score submitted successfully! Score: ${gameData.score}, Turns: ${gameData.turns}, Merges: ${gameData.scoreStamps.length}`;
+                    
+                    // Reset form
+                    document.getElementById('scoreForm').reset();
+                } else {
+                    throw new Error('Submission to Firebase failed');
+                }
 
             } catch (error) {
-                // Show error
                 statusMessage.className = 'status-message error';
                 statusMessage.textContent = `❌ Error: ${error.message}`;
+                console.error(error);
             } finally {
-                // Hide loading
                 submitBtn.disabled = false;
                 loader.classList.remove('active');
                 loadingText.classList.remove('active');
